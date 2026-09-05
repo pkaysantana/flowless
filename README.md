@@ -1,5 +1,20 @@
 # Flowless
 
+---
+
+**A closed-loop diagnostic coordination layer that lets specialist diagnostic requests travel with the patient to a convenient collection site, while routing results back to the clinical team responsible for their care.**
+
+## Live prototype
+
+👉 **[Launch Flowless](https://flowless2.netlify.app)**
+
+**Demo flow:** Hospital → Patient → Collection Unit → Laboratory → Responsible Specialist Team
+
+> Hackathon prototype using synthetic/demo patient data.
+
+---
+
+
 A location-agnostic diagnostic monitoring request and result-routing layer (hackathon prototype).
 
 A specialist creates a monitoring plan once. The system creates portable diagnostic requests that
