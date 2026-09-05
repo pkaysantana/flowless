@@ -7,13 +7,16 @@
 import { useSyncExternalStore } from 'react'
 import {
   checkRequirements,
+  generatePathwayOptions,
   resolveIssue,
+  selectPathway,
   transition,
+  type CaseState,
   type Issue,
+  type PathwayKind,
   type Referral,
-  type ReferralState,
 } from '../domain'
-import { loadDemoReferrals, requirementsFor } from '../data/demo'
+import { DEMO_GUIDANCE, loadDemoReferrals, requirementsFor } from '../data/demo'
 
 type Listener = () => void
 
@@ -33,6 +36,12 @@ function update(id: string, fn: (r: Referral) => Referral) {
   return next
 }
 
+function runPreflight(r: Referral): Referral {
+  const service = r.pathway?.service
+  if (!service) throw new Error('Pre-flight requires a selected receiving service')
+  return { ...r, issues: checkRequirements(r, requirementsFor(service)) }
+}
+
 export const referralStore = {
   getAll: () => referrals,
   getById: (id: string) => referrals.find((r) => r.id === id),
@@ -42,29 +51,24 @@ export const referralStore = {
     emit()
   },
 
-  /** Runs the deterministic requirements check and stores resulting issues. */
-  runRequirementsCheck(id: string) {
-    return update(id, (r) => ({ ...r, issues: checkRequirements(r, requirementsFor(r.specialty)) }))
-  },
-
-  transition(id: string, to: ReferralState, actor: string, note?: string) {
+  transition(id: string, to: CaseState, actor: string, note?: string) {
     return update(id, (r) => {
       let next = r
-      if (to === 'REQUIREMENTS_CHECKED') {
-        next = { ...next, issues: checkRequirements(next, requirementsFor(next.specialty)) }
+      if (to === 'PATHWAY_OPTIONS_GENERATED') {
+        next = { ...next, pathwayOptions: generatePathwayOptions(next, DEMO_GUIDANCE) }
       }
-      next = transition(next, { to, actor, note })
-      if (to === 'SUBMITTED') {
-        next = {
-          ...next,
-          submission: {
-            reference: `DEMO-${next.id}-${next.history.length}`,
-            submittedAt: new Date().toISOString(),
-            destination: 'Demo e-Referral endpoint (stub)',
-          },
-        }
+      if (to === 'REFERRAL_REQUIREMENTS_CHECKED') {
+        next = runPreflight(next)
       }
-      return next
+      return transition(next, { to, actor, note })
+    })
+  },
+
+  /** Clinician records a pathway decision, then the case moves to PATHWAY_SELECTED. */
+  selectPathway(id: string, kind: PathwayKind, service: string | undefined, actor: string, note: string) {
+    return update(id, (r) => {
+      const withDecision = selectPathway(r, { kind, service, actor, note })
+      return transition(withDecision, { to: 'PATHWAY_SELECTED', actor, note: undefined })
     })
   },
 

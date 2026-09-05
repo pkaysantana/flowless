@@ -1,4 +1,4 @@
-import type { FieldValue, Issue, Referral, SpecialtyRequirements } from './types'
+import type { FieldValue, Issue, Referral, ServiceRequirements } from './types'
 
 /** Below this confidence an EXTRACTED value is flagged as uncertain. Tune with the clinical team. */
 export const UNCERTAINTY_THRESHOLD = 0.8
@@ -19,12 +19,12 @@ function isEmpty(v: unknown): boolean {
 /**
  * Deterministic requirements check. Produces issues; it never fills in values.
  *
- * - MISSING_REQUIRED: a required field for the specialty is null/empty.
+ * - MISSING_REQUIRED: a required field for the receiving service is null/empty.
  * - UNCERTAIN_EXTRACTION: an EXTRACTED value has confidence below threshold.
  * - Existing CONFLICTING / HUMAN_REVIEW_REQUIRED issues are preserved (they are
  *   authored by the data source or a human, not derived here).
  */
-export function checkRequirements(referral: Referral, requirements: SpecialtyRequirements): Issue[] {
+export function checkRequirements(referral: Referral, requirements: ServiceRequirements): Issue[] {
   const derived: Issue[] = []
 
   for (const path of requirements.requiredFields as FieldPath[]) {
@@ -33,7 +33,7 @@ export function checkRequirements(referral: Referral, requirements: SpecialtyReq
       derived.push({
         kind: 'MISSING_REQUIRED',
         field: path,
-        message: `${path} is required for ${requirements.specialty} referrals but is not recorded.`,
+        message: `${path} is required by ${requirements.service} but is not recorded.`,
       })
     }
   }

@@ -1,4 +1,4 @@
-import type { HistoryEntry, Referral, ReferralState } from './types'
+import type { CaseState, HistoryEntry, Referral } from './types'
 
 /**
  * Allowed transitions. Anything not listed here is rejected.
@@ -7,35 +7,48 @@ import type { HistoryEntry, Referral, ReferralState } from './types'
  * MUST be triggered by a named human actor — never automatically.
  */
 export interface TransitionRule {
-  from: ReferralState
-  to: ReferralState
+  from: CaseState
+  to: CaseState
   requiresHuman: boolean
   label: string
 }
 
 export const TRANSITIONS: TransitionRule[] = [
-  { from: 'REFERRAL_DECIDED', to: 'INFORMATION_ASSEMBLED', requiresHuman: false, label: 'Assemble information' },
-  { from: 'INFORMATION_ASSEMBLED', to: 'REQUIREMENTS_CHECKED', requiresHuman: false, label: 'Check requirements' },
-  // Outcome of the requirements check is computed by `checkRequirements`, not chosen freely.
-  { from: 'REQUIREMENTS_CHECKED', to: 'NEEDS_HUMAN_REVIEW', requiresHuman: false, label: 'Flag for human review' },
-  { from: 'REQUIREMENTS_CHECKED', to: 'READY_FOR_REVIEW', requiresHuman: false, label: 'Mark ready for review' },
-  // A human resolves issues and explicitly confirms the referral is ready.
-  { from: 'NEEDS_HUMAN_REVIEW', to: 'READY_FOR_REVIEW', requiresHuman: true, label: 'Issues resolved — ready for review' },
-  { from: 'NEEDS_HUMAN_REVIEW', to: 'INFORMATION_ASSEMBLED', requiresHuman: true, label: 'Send back to gather more information' },
-  // Clinical judgement.
-  { from: 'READY_FOR_REVIEW', to: 'CLINICIAN_APPROVED', requiresHuman: true, label: 'Clinician approves' },
-  { from: 'READY_FOR_REVIEW', to: 'NEEDS_HUMAN_REVIEW', requiresHuman: true, label: 'Clinician requests changes' },
-  { from: 'CLINICIAN_APPROVED', to: 'SUBMITTED', requiresHuman: true, label: 'Submit referral' },
-  { from: 'SUBMITTED', to: 'TRACKING', requiresHuman: false, label: 'Start tracking' },
+  // Pathway support
+  { from: 'CASE_OPENED', to: 'PATHWAY_OPTIONS_GENERATED', requiresHuman: false, label: 'Generate pathway options' },
+  { from: 'PATHWAY_OPTIONS_GENERATED', to: 'CLINICIAN_PATHWAY_REVIEW', requiresHuman: true, label: 'Clinician reviews options' },
+  // PATHWAY_SELECTED is reached via `selectPathway`, which records the decision.
+  { from: 'CLINICIAN_PATHWAY_REVIEW', to: 'PATHWAY_SELECTED', requiresHuman: true, label: 'Select pathway' },
+  // Branch — computed from the recorded decision (see `pathwayBranch`).
+  { from: 'PATHWAY_SELECTED', to: 'ACTION_READY', requiresHuman: false, label: 'Prepare non-referral action' },
+  { from: 'PATHWAY_SELECTED', to: 'REFERRAL_DRAFTED', requiresHuman: false, label: 'Draft referral' },
+  // Referral pre-flight
+  { from: 'REFERRAL_DRAFTED', to: 'REFERRAL_REQUIREMENTS_CHECKED', requiresHuman: false, label: 'Run pre-flight check' },
+  // Outcome is computed by `requirementsOutcome`, not chosen freely.
+  { from: 'REFERRAL_REQUIREMENTS_CHECKED', to: 'NEEDS_REVIEW', requiresHuman: false, label: 'Flag for review' },
+  { from: 'REFERRAL_REQUIREMENTS_CHECKED', to: 'READY_FOR_CLINICIAN_APPROVAL', requiresHuman: false, label: 'Ready for clinician approval' },
+  { from: 'NEEDS_REVIEW', to: 'READY_FOR_CLINICIAN_APPROVAL', requiresHuman: true, label: 'Issues resolved — ready for approval' },
+  { from: 'NEEDS_REVIEW', to: 'REFERRAL_DRAFTED', requiresHuman: true, label: 'Back to draft' },
+  // Clinical judgement
+  { from: 'READY_FOR_CLINICIAN_APPROVAL', to: 'CLINICIAN_APPROVED', requiresHuman: true, label: 'Clinician approves' },
+  { from: 'READY_FOR_CLINICIAN_APPROVAL', to: 'NEEDS_REVIEW', requiresHuman: true, label: 'Clinician requests changes' },
+  { from: 'CLINICIAN_APPROVED', to: 'READY_TO_SEND', requiresHuman: true, label: 'Mark ready to send' },
+  // No automatic submission: READY_TO_SEND is terminal in this prototype.
 ]
 
-export const TERMINAL_STATES: ReferralState[] = ['TRACKING']
+export const TERMINAL_STATES: CaseState[] = ['ACTION_READY', 'READY_TO_SEND']
 
-export function availableTransitions(state: ReferralState): TransitionRule[] {
+export function availableTransitions(state: CaseState): TransitionRule[] {
   return TRANSITIONS.filter((t) => t.from === state)
 }
 
-export type TransitionErrorCode = 'NOT_ALLOWED' | 'HUMAN_REQUIRED' | 'BLOCKED_BY_ISSUES' | 'REQUIREMENTS_NOT_MET'
+export type TransitionErrorCode =
+  | 'NOT_ALLOWED'
+  | 'HUMAN_REQUIRED'
+  | 'BLOCKED_BY_ISSUES'
+  | 'REQUIREMENTS_NOT_MET'
+  | 'PATHWAY_NOT_SELECTED'
+  | 'WRONG_BRANCH'
 
 export class TransitionError extends Error {
   readonly code: TransitionErrorCode
@@ -47,11 +60,22 @@ export class TransitionError extends Error {
 }
 
 export interface TransitionInput {
-  to: ReferralState
+  to: CaseState
   /** Human actor name/role. Required when the rule has `requiresHuman`. Use 'system' for automatic steps. */
   actor: string
   note?: string
   now?: () => string
+}
+
+/** Which branch the recorded pathway decision leads to. */
+export function pathwayBranch(referral: Referral): 'ACTION_READY' | 'REFERRAL_DRAFTED' | null {
+  if (!referral.pathway) return null
+  return referral.pathway.kind === 'SECONDARY_CARE_REFERRAL' ? 'REFERRAL_DRAFTED' : 'ACTION_READY'
+}
+
+/** The single valid outcome of a pre-flight check for this referral. */
+export function requirementsOutcome(referral: Referral): 'NEEDS_REVIEW' | 'READY_FOR_CLINICIAN_APPROVAL' {
+  return referral.issues.length > 0 ? 'NEEDS_REVIEW' : 'READY_FOR_CLINICIAN_APPROVAL'
 }
 
 /**
@@ -60,9 +84,10 @@ export interface TransitionInput {
  * Guards:
  * - Only rules in TRANSITIONS are allowed.
  * - Human-required steps reject `actor === 'system'`.
- * - Moving to READY_FOR_REVIEW / CLINICIAN_APPROVED / SUBMITTED is blocked while
- *   unresolved issues exist (a human must clear them first — see `resolveIssue`).
- * - Leaving REQUIREMENTS_CHECKED must agree with `checkRequirements` (no bypassing).
+ * - PATHWAY_SELECTED requires a recorded clinician decision (`selectPathway`).
+ * - Leaving PATHWAY_SELECTED must follow the branch implied by that decision.
+ * - Approval-side states are blocked while unresolved issues exist.
+ * - Leaving REFERRAL_REQUIREMENTS_CHECKED must agree with `requirementsOutcome`.
  */
 export function transition(referral: Referral, input: TransitionInput): Referral {
   const rule = TRANSITIONS.find((t) => t.from === referral.state && t.to === input.to)
@@ -72,17 +97,26 @@ export function transition(referral: Referral, input: TransitionInput): Referral
   if (rule.requiresHuman && (!input.actor || input.actor === 'system')) {
     throw new TransitionError(`${rule.label} requires a human actor`, 'HUMAN_REQUIRED')
   }
-  const gated: ReferralState[] = ['READY_FOR_REVIEW', 'CLINICIAN_APPROVED', 'SUBMITTED']
+  if (input.to === 'PATHWAY_SELECTED' && !referral.pathway) {
+    throw new TransitionError('A clinician must select a pathway first', 'PATHWAY_NOT_SELECTED')
+  }
+  if (referral.state === 'PATHWAY_SELECTED') {
+    const branch = pathwayBranch(referral)
+    if (input.to !== branch) {
+      throw new TransitionError(`Selected pathway leads to ${branch}`, 'WRONG_BRANCH')
+    }
+  }
+  const gated: CaseState[] = ['READY_FOR_CLINICIAN_APPROVAL', 'CLINICIAN_APPROVED', 'READY_TO_SEND']
   if (gated.includes(input.to) && referral.issues.length > 0) {
     throw new TransitionError(
       `${referral.issues.length} unresolved issue(s) must be addressed before ${input.to}`,
       'BLOCKED_BY_ISSUES',
     )
   }
-  if (referral.state === 'REQUIREMENTS_CHECKED') {
-    const expected = referral.issues.length > 0 ? 'NEEDS_HUMAN_REVIEW' : 'READY_FOR_REVIEW'
+  if (referral.state === 'REFERRAL_REQUIREMENTS_CHECKED') {
+    const expected = requirementsOutcome(referral)
     if (input.to !== expected) {
-      throw new TransitionError(`Requirements check outcome is ${expected}`, 'REQUIREMENTS_NOT_MET')
+      throw new TransitionError(`Pre-flight outcome is ${expected}`, 'REQUIREMENTS_NOT_MET')
     }
   }
 
@@ -94,9 +128,4 @@ export function transition(referral: Referral, input: TransitionInput): Referral
     note: input.note,
   }
   return { ...referral, state: input.to, history: [...referral.history, entry] }
-}
-
-/** Convenience: the single valid outcome of a requirements check for this referral. */
-export function requirementsOutcome(referral: Referral): 'NEEDS_HUMAN_REVIEW' | 'READY_FOR_REVIEW' {
-  return referral.issues.length > 0 ? 'NEEDS_HUMAN_REVIEW' : 'READY_FOR_REVIEW'
 }

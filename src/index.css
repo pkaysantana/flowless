@@ -73,3 +73,11 @@ dl { margin: 0; }
 
 .history { padding-left: 1.2rem; font-size: 0.9rem; }
 .history li { margin-bottom: 0.4rem; }
+
+.options { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.option { background: #fff; border: 1px solid #e4e7eb; border-left: 4px solid #1e40af; padding: 0.7rem 0.9rem; border-radius: 6px; display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+.option p { margin: 0.25rem 0; }
+.override { margin-top: 0.75rem; }
+.override summary { cursor: pointer; color: #1e40af; }
+.override__form { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+select { font: inherit; padding: 0.4rem 0.6rem; border: 1px solid #cbd2d9; border-radius: 6px; }

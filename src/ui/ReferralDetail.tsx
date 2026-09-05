@@ -8,6 +8,7 @@ import {
 } from '../domain'
 import { referralStore } from '../store/referralStore'
 import { StateBadge } from './StateBadge'
+import { PathwayPanel } from './PathwayPanel'
 
 /** Placeholder human actor until auth exists. Integration point: replace with the signed-in user. */
 const DEMO_ACTOR = 'Demo Clinician'
@@ -76,7 +77,8 @@ function IssueCard({ referral, issue }: { referral: Referral; issue: Issue }) {
 
 export function ReferralDetail({ referral }: { referral: Referral }) {
   const [error, setError] = useState<string | null>(null)
-  const transitions = availableTransitions(referral.state)
+  // 'Select pathway' is performed via the PathwayPanel, not a plain button.
+  const transitions = availableTransitions(referral.state).filter((t) => t.to !== 'PATHWAY_SELECTED')
 
   function go(to: Referral['state'], requiresHuman: boolean) {
     setError(null)
@@ -94,7 +96,7 @@ export function ReferralDetail({ referral }: { referral: Referral }) {
         <div>
           <h2>{referral.patient.fullName.value ?? <em>Name not recorded</em>}</h2>
           <div className="muted">
-            {referral.id} · {referral.specialty}
+            {referral.id} · {referral.features.presentingProblem.value ?? <em>Presenting problem not recorded</em>}
           </div>
         </div>
         <StateBadge state={referral.state} />
@@ -102,7 +104,12 @@ export function ReferralDetail({ referral }: { referral: Referral }) {
 
       <section className="actions">
         <h3>Next steps</h3>
-        {transitions.length === 0 && <p className="muted">No further transitions.</p>}
+        {transitions.length === 0 && referral.state !== 'CLINICIAN_PATHWAY_REVIEW' && (
+          <p className="muted">No further transitions. Nothing is sent automatically.</p>
+        )}
+        {referral.state === 'CLINICIAN_PATHWAY_REVIEW' && (
+          <p className="muted">Choose or override a pathway below to continue.</p>
+        )}
         <div className="actions__buttons">
           {transitions.map((t) => (
             <button
@@ -124,6 +131,8 @@ export function ReferralDetail({ referral }: { referral: Referral }) {
         )}
       </section>
 
+      <PathwayPanel referral={referral} actor={DEMO_ACTOR} onError={setError} />
+
       <section>
         <h3>
           Issues{' '}
@@ -142,6 +151,11 @@ export function ReferralDetail({ referral }: { referral: Referral }) {
 
       <section className="columns">
         <div>
+          <h3>Case features</h3>
+          <dl>
+            <Field label="Presenting problem" field={referral.features.presentingProblem} />
+            <Field label="Findings (tags)" field={referral.features.findings} />
+          </dl>
           <h3>Patient</h3>
           <dl>
             <Field label="NHS number (fictional)" field={referral.patient.nhsNumber} />
@@ -160,16 +174,6 @@ export function ReferralDetail({ referral }: { referral: Referral }) {
           </dl>
         </div>
       </section>
-
-      {referral.submission && (
-        <section>
-          <h3>Submission</h3>
-          <p>
-            Ref <code>{referral.submission.reference}</code> → {referral.submission.destination} at{' '}
-            {referral.submission.submittedAt}
-          </p>
-        </section>
-      )}
 
       <section>
         <h3>History</h3>

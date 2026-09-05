@@ -3,7 +3,7 @@ import { useReferrals, referralStore } from '../store/referralStore'
 import { ReferralDetail } from './ReferralDetail'
 import { StateBadge } from './StateBadge'
 
-const TITLE = import.meta.env.VITE_APP_TITLE || 'Referral Coordination — Demo'
+const TITLE = import.meta.env.VITE_APP_TITLE || 'Referral Co-pilot — Demo'
 const RESET_ENABLED = import.meta.env.VITE_ENABLE_DEMO_RESET !== 'false'
 
 export default function App() {
@@ -38,7 +38,7 @@ export default function App() {
                 {r.patient.fullName.value ?? <em>Name not recorded</em>}
               </div>
               <div className="list__item-meta">
-                {r.id} · {r.specialty}
+                {r.id}
                 {r.issues.length > 0 && <span className="pill pill--warn">{r.issues.length} issue(s)</span>}
               </div>
               <StateBadge state={r.state} />

@@ -1,12 +1,26 @@
 [
   {
-    "specialty": "Cardiology",
+    "service": "Rapid Access Chest Pain Clinic",
     "requiredFields": [
       "patient.nhsNumber",
       "patient.fullName",
       "patient.dateOfBirth",
       "patient.gpPractice",
       "clinical.reasonForReferral",
+      "clinical.medications",
+      "clinical.allergies",
+      "clinical.urgency"
+    ]
+  },
+  {
+    "service": "Cardiology Outpatients",
+    "requiredFields": [
+      "patient.nhsNumber",
+      "patient.fullName",
+      "patient.dateOfBirth",
+      "patient.gpPractice",
+      "clinical.reasonForReferral",
+      "clinical.relevantHistory",
       "clinical.medications",
       "clinical.allergies",
       "clinical.urgency"
