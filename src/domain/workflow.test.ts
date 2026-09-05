@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  collectSample,
+  ExpiredOnCollectError,
   ExpiredOnPresentError,
   TransitionError,
+  availableTransitions,
   demoToken,
   nextScheduledRequest,
   present,
@@ -31,7 +34,8 @@ describe('golden path (recurring request)', () => {
     expect(r.status).toBe('PRESENTED')
     expect(r.fulfilledBy).toBe(PROVIDER)
 
-    r = transition(r, { to: 'SAMPLE_COLLECTED', actor: PROVIDER, now: demoClock })
+    r = collectSample(r, { actor: PROVIDER, now: demoClock })
+    expect(r.status).toBe('SAMPLE_COLLECTED')
     const plan = DEMO_PLANS[0]
     const next = nextScheduledRequest(plan, [r])
     expect(next?.sequence).toBe(2)
@@ -69,7 +73,7 @@ describe('expired request', () => {
       expect(err.code).toBe('EXPIRED')
       expect(err.request.status).toBe('EXPIRED')
       expect(err.request.fulfilledBy).toBeUndefined()
-      expect(() => transition(err.request, { to: 'SAMPLE_COLLECTED', actor: PROVIDER, now: demoClock })).toThrow(/Cannot move/)
+      expect(() => collectSample(err.request, { actor: PROVIDER, now: demoClock })).toThrow(/EXPIRED/)
     }
   })
 
@@ -86,15 +90,14 @@ describe('expired request', () => {
 
 describe('guards', () => {
   it('human steps cannot be performed by system', () => {
-    expect(() => present(recurring, { token: recurring.token, provider: PROVIDER, now: demoClock })).not.toThrow()
     const presented = present(recurring, { token: recurring.token, provider: PROVIDER, now: demoClock })
-    expect(() => transition(presented, { to: 'SAMPLE_COLLECTED', actor: 'system', now: demoClock })).toThrow(/named actor/)
+    expect(() => collectSample(presented, { actor: 'system', now: demoClock })).toThrow(/named actor/)
   })
 
   it('lab steps require a named lab actor, not system', () => {
-    const collected = transition(
+    const collected = collectSample(
       present(recurring, { token: recurring.token, provider: PROVIDER, now: demoClock }),
-      { to: 'SAMPLE_COLLECTED', actor: PROVIDER, now: demoClock },
+      { actor: PROVIDER, now: demoClock },
     )
     expect(() => transition(collected, { to: 'LAB_PROCESSING', actor: 'system', now: demoClock })).toThrow(/named actor/)
     const processing = transition(collected, { to: 'LAB_PROCESSING', actor: 'Demo Lab', now: demoClock })
@@ -117,5 +120,74 @@ describe('guards', () => {
   it('cancelled request cannot be presented', () => {
     const c = transition(recurring, { to: 'CANCELLED', actor: 'Dr Demo', now: demoClock })
     expect(() => present(c, { token: c.token, provider: PROVIDER, now: demoClock })).toThrow(/CANCELLED/)
+  })
+})
+
+describe('guarded transitions cannot be bypassed', () => {
+  it('ACTIVE → PRESENTED is not reachable via generic transition', () => {
+    try {
+      transition(recurring, { to: 'PRESENTED', actor: PROVIDER, now: demoClock })
+      throw new Error('should have thrown')
+    } catch (e) {
+      expect(e).toBeInstanceOf(TransitionError)
+      expect((e as TransitionError).code).toBe('GUARDED')
+    }
+  })
+
+  it('PRESENTED → SAMPLE_COLLECTED is not reachable via generic transition', () => {
+    const presented = present(recurring, { token: recurring.token, provider: PROVIDER, now: demoClock })
+    expect(() => transition(presented, { to: 'SAMPLE_COLLECTED', actor: PROVIDER, now: demoClock })).toThrow(/dedicated operation/)
+  })
+
+  it('result-routing outcomes are not reachable via generic transition', () => {
+    const r: MonitoringRequest = { ...recurring, status: 'RESULT_AVAILABLE' }
+    expect(() => transition(r, { to: 'AWAITING_CLINICIAN_REVIEW', actor: 'anyone', now: demoClock })).toThrow(/dedicated operation/)
+    expect(() => transition(r, { to: 'ROUTING_FAILED', actor: 'anyone', now: demoClock })).toThrow(/dedicated operation/)
+  })
+
+  it('availableTransitions never offers a guarded rule', () => {
+    for (const state of ['ACTIVE', 'PRESENTED', 'RESULT_AVAILABLE'] as const) {
+      for (const rule of availableTransitions(state)) {
+        expect(rule.guarded).toBeUndefined()
+      }
+    }
+  })
+})
+
+describe('collectSample', () => {
+  const presented = () => present(recurring, { token: recurring.token, provider: PROVIDER, now: demoClock })
+
+  it('collects exactly once — a second collection fails', () => {
+    const collected = collectSample(presented(), { actor: PROVIDER, now: demoClock })
+    expect(collected.status).toBe('SAMPLE_COLLECTED')
+    expect(collected.history.at(-1)?.actor).toBe(PROVIDER)
+    expect(() => collectSample(collected, { actor: PROVIDER, now: demoClock })).toThrow(/only be collected once/)
+  })
+
+  it('rechecks expiry at collection time and records EXPIRED', () => {
+    const afterExpiry = () => '2026-09-16T09:00:00.000Z' // recurring expires 2026-09-15
+    try {
+      collectSample(presented(), { actor: PROVIDER, now: afterExpiry })
+      throw new Error('should have thrown')
+    } catch (e) {
+      expect(e).toBeInstanceOf(ExpiredOnCollectError)
+      const err = e as ExpiredOnCollectError
+      expect(err.code).toBe('EXPIRED')
+      expect(err.request.status).toBe('EXPIRED')
+      expect(err.request.history.at(-1)?.note).toMatch(/collection refused/)
+    }
+  })
+
+  it('refuses collection for cancelled, invalid and expired requests', () => {
+    for (const status of ['CANCELLED', 'INVALID', 'EXPIRED', 'ACTIVE'] as const) {
+      const r: MonitoringRequest = { ...recurring, status }
+      try {
+        collectSample(r, { actor: PROVIDER, now: demoClock })
+        throw new Error('should have thrown')
+      } catch (e) {
+        expect(e).toBeInstanceOf(TransitionError)
+        expect((e as TransitionError).code).toBe('NOT_COLLECTABLE')
+      }
+    }
   })
 })
