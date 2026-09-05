@@ -1,0 +1,63 @@
+[
+  {
+    "id": "REF-DEMO-001",
+    "specialty": "Cardiology",
+    "state": "REFERRAL_DECIDED",
+    "patient": {
+      "nhsNumber": { "value": "999 000 0001", "source": "EHR" },
+      "fullName": { "value": "Alex Example", "source": "EHR" },
+      "dateOfBirth": { "value": "1968-04-12", "source": "EHR" },
+      "gpPractice": { "value": "Riverside Demo Practice", "source": "EHR" }
+    },
+    "clinical": {
+      "reasonForReferral": {
+        "value": "Exertional chest tightness over 6 weeks; ECG unremarkable; requesting cardiology assessment.",
+        "source": "GP_LETTER"
+      },
+      "relevantHistory": { "value": "Hypertension (2019). Ex-smoker.", "source": "GP_LETTER" },
+      "medications": { "value": ["Amlodipine 5mg OD"], "source": "EHR" },
+      "allergies": { "value": ["No known drug allergies"], "source": "EHR" },
+      "urgency": { "value": "URGENT", "source": "GP_LETTER" }
+    },
+    "issues": [],
+    "history": [
+      { "at": "2026-01-05T09:00:00.000Z", "from": null, "to": "REFERRAL_DECIDED", "actor": "Dr Demo (GP)", "note": "Referral decided in consultation." }
+    ]
+  },
+  {
+    "id": "REF-DEMO-002",
+    "specialty": "Cardiology",
+    "state": "REFERRAL_DECIDED",
+    "patient": {
+      "nhsNumber": { "value": null, "source": "EHR" },
+      "fullName": { "value": "Sam Placeholder", "source": "EHR" },
+      "dateOfBirth": { "value": "1975-11-30", "source": "EXTRACTED", "confidence": 0.55 },
+      "gpPractice": { "value": "Hillside Demo Surgery", "source": "EHR" }
+    },
+    "clinical": {
+      "reasonForReferral": {
+        "value": "Palpitations, intermittent, ? arrhythmia. Please assess.",
+        "source": "EXTRACTED",
+        "confidence": 0.91
+      },
+      "relevantHistory": { "value": null, "source": "GP_LETTER" },
+      "medications": { "value": ["Bisoprolol 2.5mg OD"], "source": "EHR" },
+      "allergies": { "value": [], "source": "EHR" },
+      "urgency": { "value": null, "source": "GP_LETTER" }
+    },
+    "issues": [
+      {
+        "kind": "CONFLICTING",
+        "field": "clinical.medications",
+        "message": "GP letter lists Bisoprolol 5mg but EHR records Bisoprolol 2.5mg.",
+        "candidates": [
+          { "value": "Bisoprolol 5mg OD", "source": "GP_LETTER" },
+          { "value": "Bisoprolol 2.5mg OD", "source": "EHR" }
+        ]
+      }
+    ],
+    "history": [
+      { "at": "2026-01-06T14:30:00.000Z", "from": null, "to": "REFERRAL_DECIDED", "actor": "Dr Demo (GP)", "note": "Referral decided; letter dictated." }
+    ]
+  }
+]

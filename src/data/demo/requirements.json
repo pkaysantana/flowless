@@ -1,0 +1,15 @@
+[
+  {
+    "specialty": "Cardiology",
+    "requiredFields": [
+      "patient.nhsNumber",
+      "patient.fullName",
+      "patient.dateOfBirth",
+      "patient.gpPractice",
+      "clinical.reasonForReferral",
+      "clinical.medications",
+      "clinical.allergies",
+      "clinical.urgency"
+    ]
+  }
+]
