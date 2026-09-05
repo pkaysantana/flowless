@@ -96,7 +96,7 @@ Exceptional: EXPIRED, CANCELLED, INVALID, ROUTING_FAILED (→ retry → AWAITING
 | `src/ui/ProviderView.tsx` | phlebotomy provider: token → request, present/collect | `#/present/<token>` |
 | `src/ui/route.ts` | hash router + `presentUrl()` | |
 
-## Integration points (for Oleg's frontend)
+## Integration points (for a replacement frontend)
 
 Everything the UI does goes through two surfaces; a replacement frontend can keep them as-is:
 
