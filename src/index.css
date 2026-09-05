@@ -80,3 +80,6 @@ dl { margin: 0; }
 @media print {
   .no-print { display: none; }
 }
+
+.phone-frame { width: 300px; margin: 1.5rem auto; border: 10px solid #1f2933; border-radius: 32px; background: #1f2933; }
+.phone-frame__screen { background: #fff; border-radius: 22px; padding: 1.25rem 1rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.4rem; min-height: 420px; }

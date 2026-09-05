@@ -94,6 +94,12 @@ export const requestStore = {
     }
   },
 
+  /** Appends a log-only history entry (no state change) — used by simulated patient notifications. */
+  addNote(id: string, actor: string, note: string) {
+    update(id, (r) => ({ ...r, history: [...r.history, { at: demoClock(), actor, note }] }))
+    emit()
+  },
+
   /** Lab staff enter a fictional result; the system then routes it. */
   receiveResult(id: string, summary: string, actor: string) {
     update(id, (r) => ({

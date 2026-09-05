@@ -72,6 +72,29 @@ describe('specimen label', () => {
   })
 })
 
+describe('patient delivery', () => {
+  it('prints a patient letter that does show the patient name', () => {
+    window.location.hash = `#/letter/${recurring.token}`
+    render(<App />)
+    expect(screen.getByText(/your test appointment/i)).toBeInTheDocument()
+    expect(screen.getByText(recurring.demographics.fullName)).toBeInTheDocument()
+  })
+
+  it('renders the NHS App concept mockup with the recurrence reminder', () => {
+    window.location.hash = `#/nhsapp/${recurring.token}`
+    render(<App />)
+    expect(screen.getByText(/concept mockup/i)).toBeInTheDocument()
+    expect(screen.getByText(/reminder: repeats every 28 days/i)).toBeInTheDocument()
+  })
+
+  it('records a simulated notification in the request history when no contact details are on file', () => {
+    window.location.hash = ''
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /notify patient/i }))
+    expect(screen.getByText(/no email\/phone on file/i)).toBeInTheDocument()
+  })
+})
+
 describe('provider view', () => {
   it('blocks collection of an expired request with a visible error', async () => {
     window.location.hash = `#/present/${expired.token}`

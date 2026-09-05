@@ -11,12 +11,14 @@ export type Route =
   | { view: 'lab'; token: string }
   | { view: 'nhsapp'; token: string }
   | { view: 'label'; token: string }
+  | { view: 'letter'; token: string }
 
-const ROUTE_PATTERNS: { view: 'present' | 'lab' | 'nhsapp' | 'label'; pattern: RegExp }[] = [
+const ROUTE_PATTERNS: { view: 'present' | 'lab' | 'nhsapp' | 'label' | 'letter'; pattern: RegExp }[] = [
   { view: 'present', pattern: /^#\/present\/([^/?]+)/ },
   { view: 'lab', pattern: /^#\/lab\/([^/?]+)/ },
   { view: 'nhsapp', pattern: /^#\/nhsapp\/([^/?]+)/ },
   { view: 'label', pattern: /^#\/label\/([^/?]+)/ },
+  { view: 'letter', pattern: /^#\/letter\/([^/?]+)/ },
 ]
 
 export function parseRoute(hash: string): Route {
@@ -49,6 +51,11 @@ export function nhsAppUrl(token: string): string {
 /** URL for the printable specimen-label page (opened in a popup, not encoded anywhere). */
 export function specimenLabelUrl(token: string): string {
   return urlFor('label', token)
+}
+
+/** URL for the printable patient letter (opened in a popup). */
+export function patientLetterUrl(token: string): string {
+  return urlFor('letter', token)
 }
 
 export function useRoute(): Route {

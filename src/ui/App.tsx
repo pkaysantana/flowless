@@ -5,6 +5,8 @@ import { RequestDetail } from './RequestDetail'
 import { ProviderView } from './ProviderView'
 import { LabView } from './LabView'
 import { SpecimenLabel } from './SpecimenLabel'
+import { PatientLetter } from './PatientLetter'
+import { NhsAppMock } from './NhsAppMock'
 import { useRoute } from './route'
 
 const TITLE = import.meta.env.VITE_APP_TITLE || 'Care Relay — Demo'
@@ -38,6 +40,10 @@ export default function App() {
         <LabView initialToken={route.token} />
       ) : route.view === 'label' ? (
         <SpecimenLabel token={route.token} />
+      ) : route.view === 'letter' ? (
+        <PatientLetter token={route.token} />
+      ) : route.view === 'nhsapp' ? (
+        <NhsAppMock token={route.token} />
       ) : (
         <div className="app__body">
           <nav className="list" aria-label="Monitoring requests">

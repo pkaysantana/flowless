@@ -3,7 +3,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { availableTransitions, TransitionError, type MonitoringRequest, type RequestState } from '../domain'
 import { requestStore } from '../store/requestStore'
 import { StateBadge } from './StateBadge'
-import { presentUrl } from './route'
+import { labUrl, nhsAppUrl, patientLetterUrl, presentUrl } from './route'
 
 /** Placeholder actor until a demo login exists. Integration point: replace with the signed-in user. */
 const DEMO_ACTOR = 'Demo Specialist'
@@ -39,6 +39,13 @@ export function RequestDetail({ request: r }: { request: MonitoringRequest }) {
   const steps = availableTransitions(r.status).filter((t) => CONSOLE_STEPS.has(t.to))
   const url = presentUrl(r.token)
 
+  function notifyPatient() {
+    const { email, phone } = r.demographics
+    if (email) requestStore.addNote(r.id, DEMO_ACTOR, `Simulated email sent to ${email}`)
+    if (phone) requestStore.addNote(r.id, DEMO_ACTOR, `Simulated SMS sent to ${phone}`)
+    if (!email && !phone) requestStore.addNote(r.id, DEMO_ACTOR, 'Simulated notification — no email/phone on file for this patient')
+  }
+
   return (
     <article>
       <header className="detail__header">
@@ -71,9 +78,29 @@ export function RequestDetail({ request: r }: { request: MonitoringRequest }) {
                 Token: <code data-testid="token">{r.token}</code>
               </p>
               <p className="muted">
-                <a href={url}>Open provider view for this token</a>
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                  Open provider view for this token
+                </a>
+              </p>
+              <p className="muted">
+                <a href={labUrl(r.token)} target="_blank" rel="noopener noreferrer">
+                  Open lab view for this token
+                </a>
+              </p>
+              <p className="muted">
+                <a href={nhsAppUrl(r.token)} target="_blank" rel="noopener noreferrer">
+                  Open NHS App view (concept)
+                </a>
               </p>
             </div>
+          </div>
+          <div className="actions__buttons">
+            <button type="button" onClick={() => window.open(patientLetterUrl(r.token), '_blank', 'width=380,height=560')}>
+              Print patient letter
+            </button>
+            <button type="button" onClick={() => run(notifyPatient)}>
+              Notify patient (simulated email/SMS)
+            </button>
           </div>
           <dl>
             <Field label="Valid from" value={r.validFrom.slice(0, 10)} />
