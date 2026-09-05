@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { TransitionError } from '../domain'
 import { requestStore, useRequestStore } from '../store/requestStore'
 import { StateBadge } from './StateBadge'
+import { specimenLabelUrl } from './route'
 
 /** Fictional participating provider. Integration point: derive from provider login/location. */
 const DEMO_PROVIDER = 'Hillside Community Phlebotomy (fictional)'
@@ -89,8 +90,15 @@ export function ProviderView({ initialToken }: { initialToken: string }) {
                 Confirm sample collected
               </button>
             )}
+            {request.status === 'SAMPLE_COLLECTED' && (
+              <button type="button" onClick={() => window.open(specimenLabelUrl(token), '_blank', 'width=380,height=520')}>
+                Print specimen label
+              </button>
+            )}
             {request.status === 'EXPIRED' && <span className="missing">Expired — do not collect. Ask the requesting team for a new request.</span>}
-            {!['ACTIVE', 'PRESENTED', 'EXPIRED'].includes(request.status) && <span className="muted">Nothing to do here for this request.</span>}
+            {!['ACTIVE', 'PRESENTED', 'SAMPLE_COLLECTED', 'EXPIRED'].includes(request.status) && (
+              <span className="muted">Nothing to do here for this request.</span>
+            )}
           </div>
         </article>
       )}

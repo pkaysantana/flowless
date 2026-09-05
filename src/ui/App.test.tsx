@@ -41,6 +41,37 @@ describe('specialist console', () => {
   })
 })
 
+describe('lab view', () => {
+  it('lets the lab receive the specimen and submit a result, routing it back to the requester', () => {
+    act(() => {
+      requestStore.present(recurring.token, 'Provider')
+      requestStore.transition(recurring.id, 'SAMPLE_COLLECTED', 'Provider')
+    })
+
+    window.location.hash = `#/present/${recurring.token}`
+    render(<App />)
+    expect(screen.getByRole('button', { name: /print specimen label/i })).toBeInTheDocument()
+
+    window.location.hash = `#/lab/${recurring.token}`
+    fireEvent(window, new Event('hashchange'))
+    fireEvent.click(screen.getByRole('button', { name: /confirm sample received/i }))
+    fireEvent.change(screen.getByLabelText(/result summary/i), { target: { value: 'Fictional INR 2.4' } })
+    fireEvent.click(screen.getByRole('button', { name: /submit result/i }))
+
+    expect(requestStore.getSnapshot().requests.find((r) => r.id === recurring.id)?.status).toBe('AWAITING_CLINICIAN_REVIEW')
+  })
+})
+
+describe('specimen label', () => {
+  it('renders a printable label with no patient name or DOB', () => {
+    window.location.hash = `#/label/${recurring.token}`
+    render(<App />)
+    expect(screen.getByText(/specimen label/i)).toBeInTheDocument()
+    expect(screen.getByText(recurring.id)).toBeInTheDocument()
+    expect(screen.queryByText(recurring.demographics.fullName)).not.toBeInTheDocument()
+  })
+})
+
 describe('provider view', () => {
   it('blocks collection of an expired request with a visible error', async () => {
     window.location.hash = `#/present/${expired.token}`

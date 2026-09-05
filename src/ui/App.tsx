@@ -3,6 +3,8 @@ import { requestStore, useRequestStore } from '../store/requestStore'
 import { StateBadge } from './StateBadge'
 import { RequestDetail } from './RequestDetail'
 import { ProviderView } from './ProviderView'
+import { LabView } from './LabView'
+import { SpecimenLabel } from './SpecimenLabel'
 import { useRoute } from './route'
 
 const TITLE = import.meta.env.VITE_APP_TITLE || 'Care Relay — Demo'
@@ -21,11 +23,7 @@ export default function App() {
         <div className="app__header-actions">
           <span className="banner">Fictional demo data only — no real patients</span>
           <span className="muted">Demo clock: {requestStore.now().slice(0, 10)}</span>
-          {route.view === 'present' ? (
-            <a href="#/">Specialist console</a>
-          ) : (
-            <a href="#/present/">Provider view</a>
-          )}
+          {route.view !== 'console' && <a href="#/">Specialist console</a>}
           {RESET_ENABLED && (
             <button type="button" onClick={() => requestStore.reset()}>
               Reset demo
@@ -36,6 +34,10 @@ export default function App() {
 
       {route.view === 'present' ? (
         <ProviderView initialToken={route.token} />
+      ) : route.view === 'lab' ? (
+        <LabView initialToken={route.token} />
+      ) : route.view === 'label' ? (
+        <SpecimenLabel token={route.token} />
       ) : (
         <div className="app__body">
           <nav className="list" aria-label="Monitoring requests">
