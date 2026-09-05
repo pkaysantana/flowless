@@ -84,10 +84,10 @@ export const requestStore = {
     }
   },
 
-  /** Lab hands back a fictional result; the system then routes it. */
-  receiveResult(id: string, summary: string) {
+  /** Lab staff enter a fictional result; the system then routes it. */
+  receiveResult(id: string, summary: string, actor: string) {
     update(id, (r) => ({
-      ...transition(r, { to: 'RESULT_AVAILABLE', actor: 'system', now: demoClock }),
+      ...transition(r, { to: 'RESULT_AVAILABLE', actor, now: demoClock }),
       result: { receivedAt: demoClock(), summary },
     }))
     update(id, (r) => routeResult(r, demoClock))

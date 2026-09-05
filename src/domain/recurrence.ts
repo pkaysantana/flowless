@@ -37,6 +37,7 @@ export function requestFromPlan(plan: MonitoringPlan, sequence: number): Monitor
     tests: plan.tests,
     requestingClinician: plan.requestingClinician,
     requestingOrganisation: plan.requestingOrganisation,
+    requestingSite: plan.requestingSite,
     routing: plan.routing,
     validFrom,
     expiresAt: addDays(validFrom, plan.validityDays),

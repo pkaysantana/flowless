@@ -36,11 +36,16 @@ export interface Demographics {
   dateOfBirth: string | null
   sex: string | null
   nhsNumber: string | null
+  /** Fictional contact details — used only for the simulated email/SMS delivery step. */
+  email?: string | null
+  phone?: string | null
 }
 
 export interface RequestedTest {
   code: string
   name: string
+  /** Real SNOMED CT concept id for the test/procedure (see src/data/testPanels.ts). */
+  snomedCode: string
   /** Free text for the collector, e.g. "fasting", "citrate tube". */
   instructions?: string
 }
@@ -49,11 +54,28 @@ export interface Clinician {
   id: string
   name: string
   role: string
+  /** NHS Electronic Staff Record number for the requesting clinician. */
+  esrNumber: string
 }
 
 export interface Organisation {
   id: string
   name: string
+  /** Real, standardized NHS ODS trust/organisation code, e.g. "RRK". */
+  odsOrgCode: string
+}
+
+/**
+ * The specific hospital site and local ward/department that raised the request.
+ * `odsSiteCode` is real, standardized NHS ODS data (a trust can run several sites).
+ * `wardCode`/`wardName` are genuinely trust-invented — the NHS has no national
+ * registry below site level.
+ */
+export interface RequestingSite {
+  odsSiteCode: string
+  siteName: string
+  wardCode: string
+  wardName: string
 }
 
 /** Where results are sent. Demo abstraction — replace with a real endpoint later. */
@@ -89,6 +111,7 @@ export interface MonitoringPlan {
   tests: RequestedTest[]
   requestingClinician: Clinician
   requestingOrganisation: Organisation
+  requestingSite: RequestingSite
   routing: RoutingDestination
   reasonableAdjustments: string[]
   /** Days a request remains valid after its validFrom. */
@@ -110,6 +133,7 @@ export interface MonitoringRequest {
   tests: RequestedTest[]
   requestingClinician: Clinician
   requestingOrganisation: Organisation
+  requestingSite: RequestingSite
   routing: RoutingDestination
   validFrom: Iso
   expiresAt: Iso

@@ -91,12 +91,15 @@ export function RequestDetail({ request: r }: { request: MonitoringRequest }) {
               </button>
             ))}
             {r.status === 'SAMPLE_COLLECTED' && (
-              <button type="button" onClick={() => run(() => requestStore.transition(r.id, 'LAB_PROCESSING', 'system'))}>
+              <button type="button" onClick={() => run(() => requestStore.transition(r.id, 'LAB_PROCESSING', 'Demo Lab'))}>
                 Simulate: lab receives sample
               </button>
             )}
             {r.status === 'LAB_PROCESSING' && (
-              <button type="button" onClick={() => run(() => requestStore.receiveResult(r.id, 'Fictional result received (not interpreted)'))}>
+              <button
+                type="button"
+                onClick={() => run(() => requestStore.receiveResult(r.id, 'Fictional result received (not interpreted)', 'Demo Lab'))}
+              >
                 Simulate: lab result available → route
               </button>
             )}

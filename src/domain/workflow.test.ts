@@ -38,8 +38,8 @@ describe('golden path (recurring request)', () => {
     expect(next?.validFrom).toBe('2026-09-29T00:00:00.000Z')
     expect(next?.token).not.toBe(r.token)
 
-    r = transition(r, { to: 'LAB_PROCESSING', actor: 'system', now: demoClock })
-    r = transition(r, { to: 'RESULT_AVAILABLE', actor: 'system', now: demoClock })
+    r = transition(r, { to: 'LAB_PROCESSING', actor: 'Demo Lab', now: demoClock })
+    r = transition(r, { to: 'RESULT_AVAILABLE', actor: 'Demo Lab', now: demoClock })
     r = routeResult(r, demoClock)
     expect(r.status).toBe('AWAITING_CLINICIAN_REVIEW')
     expect(r.history.at(-1)?.note).toContain('Anticoagulation team inbox')
@@ -89,6 +89,20 @@ describe('guards', () => {
     expect(() => present(recurring, { token: recurring.token, provider: PROVIDER, now: demoClock })).not.toThrow()
     const presented = present(recurring, { token: recurring.token, provider: PROVIDER, now: demoClock })
     expect(() => transition(presented, { to: 'SAMPLE_COLLECTED', actor: 'system', now: demoClock })).toThrow(/named actor/)
+  })
+
+  it('lab steps require a named lab actor, not system', () => {
+    const collected = transition(
+      present(recurring, { token: recurring.token, provider: PROVIDER, now: demoClock }),
+      { to: 'SAMPLE_COLLECTED', actor: PROVIDER, now: demoClock },
+    )
+    expect(() => transition(collected, { to: 'LAB_PROCESSING', actor: 'system', now: demoClock })).toThrow(/named actor/)
+    const processing = transition(collected, { to: 'LAB_PROCESSING', actor: 'Demo Lab', now: demoClock })
+    expect(processing.status).toBe('LAB_PROCESSING')
+    expect(() => transition(processing, { to: 'RESULT_AVAILABLE', actor: 'system', now: demoClock })).toThrow(/named actor/)
+    const resulted = transition(processing, { to: 'RESULT_AVAILABLE', actor: 'Demo Lab', now: demoClock })
+    expect(resulted.status).toBe('RESULT_AVAILABLE')
+    expect(resulted.history.at(-1)?.actor).toBe('Demo Lab')
   })
 
   it('routing fails explicitly when no destination is configured', () => {
