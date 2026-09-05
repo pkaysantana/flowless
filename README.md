@@ -1,3 +1,19 @@
+---
+
+# Flowless
+
+**A closed-loop diagnostic coordination layer that lets specialist diagnostic requests travel with the patient to a convenient collection site, while routing results back to the clinical team responsible for their care.**
+
+## Live prototype
+
+👉 **[Launch Flowless](https://flowless2.netlify.app)**
+
+**Demo flow:** Hospital → Patient → Collection Unit → Laboratory → Responsible Specialist Team
+
+> Hackathon prototype using synthetic/demo patient data.
+
+---
+
 # nxgn-x-tandem — clinician-controlled NHS referral co-pilot (prototype)
 
 Hackathon prototype (Tandem Health / NXGN) combining:
