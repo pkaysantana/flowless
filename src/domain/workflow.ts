@@ -6,21 +6,27 @@ export interface TransitionRule {
   /** Must be performed by a named human/provider actor, never `'system'`. */
   requiresHuman: boolean
   label: string
+  /**
+   * Only reachable through a purpose-specific guarded operation (`present`, `collectSample`,
+   * `routeResult`) that enforces extra invariants. Rejected by the generic `transition()`.
+   */
+  guarded?: true
 }
 
 /**
  * Lifecycle. Exceptional states are reachable from the operational states shown.
- * `present()` and `routeResult()` below own the guarded entries into PRESENTED / EXPIRED /
- * AWAITING_CLINICIAN_REVIEW / ROUTING_FAILED; the UI should call those rather than `transition()`.
+ * `present()`, `collectSample()` and `routeResult()` below own the guarded entries into
+ * PRESENTED / SAMPLE_COLLECTED / EXPIRED / AWAITING_CLINICIAN_REVIEW / ROUTING_FAILED;
+ * `transition()` rejects rules marked `guarded` so callers cannot bypass those checks.
  */
 export const TRANSITIONS: TransitionRule[] = [
   { from: 'DRAFT', to: 'ACTIVE', requiresHuman: true, label: 'Activate request' },
-  { from: 'ACTIVE', to: 'PRESENTED', requiresHuman: true, label: 'Present at provider' },
-  { from: 'PRESENTED', to: 'SAMPLE_COLLECTED', requiresHuman: true, label: 'Confirm sample collected' },
-  { from: 'SAMPLE_COLLECTED', to: 'LAB_PROCESSING', requiresHuman: false, label: 'Sample received by lab' },
-  { from: 'LAB_PROCESSING', to: 'RESULT_AVAILABLE', requiresHuman: false, label: 'Result available' },
-  { from: 'RESULT_AVAILABLE', to: 'AWAITING_CLINICIAN_REVIEW', requiresHuman: false, label: 'Route result' },
-  { from: 'RESULT_AVAILABLE', to: 'ROUTING_FAILED', requiresHuman: false, label: 'Routing failed' },
+  { from: 'ACTIVE', to: 'PRESENTED', requiresHuman: true, label: 'Present at provider', guarded: true },
+  { from: 'PRESENTED', to: 'SAMPLE_COLLECTED', requiresHuman: true, label: 'Confirm sample collected', guarded: true },
+  { from: 'SAMPLE_COLLECTED', to: 'LAB_PROCESSING', requiresHuman: true, label: 'Lab receives specimen' },
+  { from: 'LAB_PROCESSING', to: 'RESULT_AVAILABLE', requiresHuman: true, label: 'Result entered' },
+  { from: 'RESULT_AVAILABLE', to: 'AWAITING_CLINICIAN_REVIEW', requiresHuman: false, label: 'Route result', guarded: true },
+  { from: 'RESULT_AVAILABLE', to: 'ROUTING_FAILED', requiresHuman: false, label: 'Routing failed', guarded: true },
   { from: 'ROUTING_FAILED', to: 'AWAITING_CLINICIAN_REVIEW', requiresHuman: true, label: 'Retry routing' },
   { from: 'AWAITING_CLINICIAN_REVIEW', to: 'REVIEWED', requiresHuman: true, label: 'Mark reviewed' },
   { from: 'DRAFT', to: 'CANCELLED', requiresHuman: true, label: 'Cancel' },
@@ -32,8 +38,9 @@ export const TRANSITIONS: TransitionRule[] = [
   { from: 'PRESENTED', to: 'INVALID', requiresHuman: false, label: 'Invalidate' },
 ]
 
+/** Rules the generic API may perform from `state`. Guarded rules are excluded — never render them as generic buttons. */
 export function availableTransitions(state: RequestState): TransitionRule[] {
-  return TRANSITIONS.filter((t) => t.from === state)
+  return TRANSITIONS.filter((t) => t.from === state && !t.guarded)
 }
 
 export type TransitionErrorCode =
@@ -43,7 +50,9 @@ export type TransitionErrorCode =
   | 'NOT_YET_VALID'
   | 'EXPIRED'
   | 'NOT_PRESENTABLE'
+  | 'NOT_COLLECTABLE'
   | 'NO_ROUTING_DESTINATION'
+  | 'GUARDED'
 
 export class TransitionError extends Error {
   readonly code: TransitionErrorCode
@@ -70,6 +79,12 @@ function withHistory(r: MonitoringRequest, entry: HistoryEntry): MonitoringReque
 export function transition(r: MonitoringRequest, input: TransitionInput): MonitoringRequest {
   const rule = TRANSITIONS.find((t) => t.from === r.status && t.to === input.to)
   if (!rule) throw new TransitionError(`Cannot move from ${r.status} to ${input.to}`, 'NOT_ALLOWED')
+  if (rule.guarded) {
+    throw new TransitionError(
+      `"${rule.label}" cannot be performed as a generic transition — use its dedicated operation`,
+      'GUARDED',
+    )
+  }
   if (rule.requiresHuman && input.actor === 'system') {
     throw new TransitionError(`"${rule.label}" must be performed by a named actor`, 'HUMAN_REQUIRED')
   }
@@ -125,6 +140,49 @@ export class ExpiredOnPresentError extends TransitionError {
   constructor(request: MonitoringRequest) {
     super(`Request expired on ${request.expiresAt.slice(0, 10)} — sample must not be collected`, 'EXPIRED')
     this.name = 'ExpiredOnPresentError'
+    this.request = request
+  }
+}
+
+export interface CollectSampleInput {
+  /** Named provider/collector — never `'system'`. */
+  actor: string
+  now: () => string
+}
+
+/**
+ * The guarded entry into SAMPLE_COLLECTED. Guards:
+ * - request must be PRESENTED (a second collection therefore always fails — the state has moved on)
+ * - actor must be a named human/provider
+ * - expiry is rechecked at collection time; a lapsed request is moved to EXPIRED and collection refused
+ */
+export function collectSample(r: MonitoringRequest, input: CollectSampleInput): MonitoringRequest {
+  if (r.status !== 'PRESENTED') {
+    throw new TransitionError(`Request is ${r.status} — sample can only be collected once, while PRESENTED`, 'NOT_COLLECTABLE')
+  }
+  if (input.actor === 'system') {
+    throw new TransitionError('"Confirm sample collected" must be performed by a named actor', 'HUMAN_REQUIRED')
+  }
+  const at = input.now()
+  if (at > r.expiresAt) {
+    const expired = withHistory(r, {
+      at,
+      actor: 'system',
+      from: r.status,
+      to: 'EXPIRED',
+      note: `Expired before collection (${r.expiresAt.slice(0, 10)}); collection refused`,
+    })
+    throw new ExpiredOnCollectError(expired)
+  }
+  return withHistory(r, { at, actor: input.actor, from: r.status, to: 'SAMPLE_COLLECTED', note: 'Sample collected' })
+}
+
+/** Thrown by `collectSample()` when the request lapsed after presentation; carries the request with EXPIRED recorded. */
+export class ExpiredOnCollectError extends TransitionError {
+  readonly request: MonitoringRequest
+  constructor(request: MonitoringRequest) {
+    super(`Request expired on ${request.expiresAt.slice(0, 10)} — sample must not be collected`, 'EXPIRED')
+    this.name = 'ExpiredOnCollectError'
     this.request = request
   }
 }

@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import {
+  collectSample,
+  ExpiredOnCollectError,
   ExpiredOnPresentError,
   nextScheduledRequest,
   present,
@@ -62,9 +64,9 @@ export const requestStore = {
     return state.requests.find((r) => r.token === token)
   },
 
+  /** Generic mutation for unguarded steps only — guarded steps throw `GUARDED`; use the dedicated methods below. */
   transition(id: string, to: RequestState, actor: string, note?: string) {
-    const next = update(id, (r) => transition(r, { to, actor, note, now: demoClock }))
-    if (to === 'SAMPLE_COLLECTED') scheduleNext(next.planId)
+    update(id, (r) => transition(r, { to, actor, note, now: demoClock }))
     emit()
   },
 
@@ -84,10 +86,29 @@ export const requestStore = {
     }
   },
 
-  /** Lab hands back a fictional result; the system then routes it. */
-  receiveResult(id: string, summary: string) {
+  /**
+   * Provider confirms collection. Only path into SAMPLE_COLLECTED, so the next recurring
+   * request is scheduled exactly once. Expiry is rechecked; a lapsed request is recorded
+   * as EXPIRED before throwing.
+   */
+  collectSample(id: string, actor: string) {
+    try {
+      const next = update(id, (r) => collectSample(r, { actor, now: demoClock }))
+      scheduleNext(next.planId)
+      emit()
+    } catch (e) {
+      if (e instanceof ExpiredOnCollectError) {
+        update(id, () => e.request)
+        emit()
+      }
+      throw e
+    }
+  },
+
+  /** Lab hands back a fictional result (named lab actor); the system then routes it. */
+  receiveResult(id: string, summary: string, actor: string) {
     update(id, (r) => ({
-      ...transition(r, { to: 'RESULT_AVAILABLE', actor: 'system', now: demoClock }),
+      ...transition(r, { to: 'RESULT_AVAILABLE', actor, now: demoClock }),
       result: { receivedAt: demoClock(), summary },
     }))
     update(id, (r) => routeResult(r, demoClock))

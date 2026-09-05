@@ -8,6 +8,9 @@ import { presentUrl } from './route'
 /** Placeholder actor until a demo login exists. Integration point: replace with the signed-in user. */
 const DEMO_ACTOR = 'Demo Specialist'
 
+/** Placeholder lab actor until the lab view (PLAN.md §6) exists — lab steps now require a named human. */
+const DEMO_LAB = 'Demo Pathology Lab (fictional)'
+
 /** Steps driven from this console. Provider steps live in ProviderView; lab/routing steps are simulated below. */
 const CONSOLE_STEPS: ReadonlySet<RequestState> = new Set<RequestState>(['ACTIVE', 'CANCELLED', 'REVIEWED', 'AWAITING_CLINICIAN_REVIEW'])
 
@@ -91,12 +94,12 @@ export function RequestDetail({ request: r }: { request: MonitoringRequest }) {
               </button>
             ))}
             {r.status === 'SAMPLE_COLLECTED' && (
-              <button type="button" onClick={() => run(() => requestStore.transition(r.id, 'LAB_PROCESSING', 'system'))}>
+              <button type="button" onClick={() => run(() => requestStore.transition(r.id, 'LAB_PROCESSING', DEMO_LAB))}>
                 Simulate: lab receives sample
               </button>
             )}
             {r.status === 'LAB_PROCESSING' && (
-              <button type="button" onClick={() => run(() => requestStore.receiveResult(r.id, 'Fictional result received (not interpreted)'))}>
+              <button type="button" onClick={() => run(() => requestStore.receiveResult(r.id, 'Fictional result received (not interpreted)', DEMO_LAB))}>
                 Simulate: lab result available → route
               </button>
             )}
