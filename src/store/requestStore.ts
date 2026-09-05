@@ -3,6 +3,7 @@ import {
   ExpiredOnPresentError,
   nextScheduledRequest,
   present,
+  requestFromPlan,
   routeResult,
   transition,
   type MonitoringPlan,
@@ -60,6 +61,15 @@ export const requestStore = {
 
   byToken(token: string): MonitoringRequest | undefined {
     return state.requests.find((r) => r.token === token)
+  },
+
+  /** Hospital creates a new monitoring plan; its first request is generated immediately. */
+  createPlan(plan: MonitoringPlan): MonitoringRequest {
+    const first = requestFromPlan(plan, 1)
+    if (!first) throw new Error('Plan produces no valid first request')
+    state = { ...state, plans: [...state.plans, plan], requests: [...state.requests, first] }
+    emit()
+    return first
   },
 
   transition(id: string, to: RequestState, actor: string, note?: string) {
