@@ -1,0 +1,59 @@
+[
+  {
+    "id": "LOCAL-CARD-001",
+    "source": "Fictional ICB Cardiology pathway (demo)",
+    "whenFindings": ["chest-pain", "exertional"],
+    "unlessFindings": ["red-flag"],
+    "suggests": [
+      {
+        "kind": "SECONDARY_CARE_REFERRAL",
+        "service": "Rapid Access Chest Pain Clinic",
+        "title": "Refer to Rapid Access Chest Pain Clinic",
+        "rationale": "Exertional chest pain without red flags meets local RACPC referral criteria."
+      },
+      {
+        "kind": "ADVICE_AND_GUIDANCE",
+        "service": "Cardiology A&G",
+        "title": "Seek cardiology advice & guidance",
+        "rationale": "Where diagnosis is uncertain, A&G may avoid an outpatient appointment."
+      }
+    ]
+  },
+  {
+    "id": "NAT-CARD-002",
+    "source": "Fictional national guidance summary (demo)",
+    "whenFindings": ["palpitations"],
+    "unlessFindings": ["ecg-done"],
+    "suggests": [
+      {
+        "kind": "FURTHER_INVESTIGATION_FIRST",
+        "title": "12-lead ECG before referral",
+        "rationale": "Receiving services expect a recent ECG with palpitation referrals."
+      },
+      {
+        "kind": "MANAGE_IN_PRIMARY_CARE",
+        "title": "Primary-care review of triggers and bloods",
+        "rationale": "Benign palpitations with normal baseline tests can often be managed in primary care."
+      }
+    ]
+  },
+  {
+    "id": "NAT-CARD-003",
+    "source": "Fictional national guidance summary (demo)",
+    "whenFindings": ["palpitations"],
+    "suggests": [
+      {
+        "kind": "SECONDARY_CARE_REFERRAL",
+        "service": "Cardiology Outpatients",
+        "title": "Refer to Cardiology Outpatients",
+        "rationale": "Persistent palpitations warrant specialist assessment."
+      },
+      {
+        "kind": "COMMUNITY_SERVICE",
+        "service": "Community Cardiac Diagnostics",
+        "title": "Community ambulatory ECG monitoring",
+        "rationale": "Intermittent symptoms may be captured with ambulatory monitoring."
+      }
+    ]
+  }
+]
