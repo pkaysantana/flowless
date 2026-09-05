@@ -14,7 +14,6 @@ export function NhsAppMock({ token }: { token: string }) {
 
   return (
     <main className="detail">
-      <p className="muted">Concept mockup — illustrates NHS App integration. Not a real integration.</p>
       <div className="phone-frame">
         <div className="phone-frame__screen">
           <h2>NHS App</h2>

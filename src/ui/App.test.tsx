@@ -15,12 +15,14 @@ describe('specialist console', () => {
   it('lists both demo requests and shows a token-only QR link', async () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: /monitoring requests/i })
-    expect(within(nav).getByText('Jordan Sample')).toBeInTheDocument()
-    expect(within(nav).getByText('Priya Placeholder')).toBeInTheDocument()
+    expect(within(nav).getByText(recurring.demographics.fullName)).toBeInTheDocument()
+    expect(within(nav).getByText(expired.demographics.fullName)).toBeInTheDocument()
     expect(screen.getByTestId('token')).toHaveTextContent(recurring.token)
     const link = screen.getByRole('link', { name: /open provider view/i }) as HTMLAnchorElement
     expect(link.href).toContain(`#/present/${recurring.token}`)
-    expect(link.href).not.toMatch(/Jordan|INR|PT-FICTIONAL/)
+    expect(link.href).not.toContain(recurring.demographics.fullName)
+    expect(link.href).not.toContain(recurring.patientRef)
+    expect(link.href).not.toContain('INR')
   })
 
   it('walks the golden path and schedules the next recurring request', async () => {
@@ -55,7 +57,7 @@ describe('lab view', () => {
     window.location.hash = `#/lab/${recurring.token}`
     fireEvent(window, new Event('hashchange'))
     fireEvent.click(screen.getByRole('button', { name: /confirm sample received/i }))
-    fireEvent.change(screen.getByLabelText(/result summary/i), { target: { value: 'Fictional INR 2.4' } })
+    fireEvent.change(screen.getByLabelText(/result summary/i), { target: { value: 'INR 2.4 (normal range)' } })
     fireEvent.click(screen.getByRole('button', { name: /submit result/i }))
 
     expect(requestStore.getSnapshot().requests.find((r) => r.id === recurring.id)?.status).toBe('AWAITING_CLINICIAN_REVIEW')
@@ -84,14 +86,14 @@ describe('new request intake', () => {
     fireEvent.change(screen.getByLabelText(/^role$/i), { target: { value: 'Registrar' } })
     fireEvent.change(screen.getByLabelText(/esr number/i), { target: { value: 'ESR-1234' } })
     fireEvent.change(screen.getByLabelText(/destination label/i), { target: { value: 'Test inbox' } })
-    fireEvent.change(screen.getByLabelText(/^full name$/i), { target: { value: 'New Fictional Patient' } })
+    fireEvent.change(screen.getByLabelText(/^full name$/i), { target: { value: 'Alex Morgan' } })
     fireEvent.click(screen.getByRole('checkbox', { name: /fbc/i }))
 
     fireEvent.click(screen.getByRole('button', { name: /^create request$/i }))
 
     const nav = screen.getByRole('navigation', { name: /monitoring requests/i })
-    expect(within(nav).getByText('New Fictional Patient')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'New Fictional Patient' })).toBeInTheDocument()
+    expect(within(nav).getByText('Alex Morgan')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
   })
 })
 
@@ -103,10 +105,10 @@ describe('patient delivery', () => {
     expect(screen.getByText(recurring.demographics.fullName)).toBeInTheDocument()
   })
 
-  it('renders the NHS App concept mockup with the recurrence reminder', () => {
+  it('renders the NHS App mockup with the recurrence reminder', () => {
     window.location.hash = `#/nhsapp/${recurring.token}`
     render(<App />)
-    expect(screen.getByText(/concept mockup/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'NHS App' })).toBeInTheDocument()
     expect(screen.getByText(/reminder: repeats every 28 days/i)).toBeInTheDocument()
   })
 
@@ -121,7 +123,7 @@ describe('patient delivery', () => {
   it('falls back to a no-contact-on-file note when the patient has no email or phone', () => {
     window.location.hash = ''
     render(<App />)
-    fireEvent.click(screen.getByText('Priya Placeholder'))
+    fireEvent.click(screen.getByText(expired.demographics.fullName))
     fireEvent.click(screen.getByRole('button', { name: /notify patient/i }))
     expect(screen.getByText(/no email\/phone on file/i)).toBeInTheDocument()
   })

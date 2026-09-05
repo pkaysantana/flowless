@@ -25,7 +25,6 @@ export default function App() {
       <header className="app__header">
         <h1>{TITLE}</h1>
         <div className="app__header-actions">
-          <span className="banner">Fictional demo data only — no real patients</span>
           <span className="muted">Demo clock: {requestStore.now().slice(0, 10)}</span>
           {route.view !== 'console' && <a href="#/">Specialist console</a>}
           {RESET_ENABLED && (

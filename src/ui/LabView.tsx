@@ -3,7 +3,7 @@ import { TransitionError } from '../domain'
 import { requestStore, useRequestStore } from '../store/requestStore'
 import { StateBadge } from './StateBadge'
 
-/** Fictional participating lab. Integration point: derive from lab login/location. */
+/** Integration point: derive from lab login/location. */
 const DEMO_LAB = 'Demo Reference Lab'
 
 /**
@@ -81,7 +81,7 @@ export function LabView({ initialToken }: { initialToken: string }) {
                   aria-label="Result summary"
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
-                  placeholder="Fictional result summary"
+                  placeholder="Result summary"
                 />
                 <button
                   type="button"

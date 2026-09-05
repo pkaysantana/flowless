@@ -125,7 +125,7 @@ export function RequestDetail({ request: r }: { request: MonitoringRequest }) {
             {r.status === 'LAB_PROCESSING' && (
               <button
                 type="button"
-                onClick={() => run(() => requestStore.receiveResult(r.id, 'Fictional result received (not interpreted)', 'Demo Lab'))}
+                onClick={() => run(() => requestStore.receiveResult(r.id, 'Result received', 'Demo Lab'))}
               >
                 Simulate: lab result available → route
               </button>
@@ -148,12 +148,12 @@ export function RequestDetail({ request: r }: { request: MonitoringRequest }) {
 
       <div className="columns">
         <section>
-          <h3>Patient (fictional)</h3>
+          <h3>Patient</h3>
           <dl>
             <Field label="Patient reference" value={r.patientRef} />
             <Field label="Date of birth" value={r.demographics.dateOfBirth} />
             <Field label="Sex" value={r.demographics.sex} />
-            <Field label="NHS number (fictional)" value={r.demographics.nhsNumber} />
+            <Field label="NHS number" value={r.demographics.nhsNumber} />
           </dl>
           <h3>Reasonable adjustments</h3>
           {r.reasonableAdjustments.length ? (

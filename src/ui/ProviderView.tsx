@@ -4,8 +4,8 @@ import { requestStore, useRequestStore } from '../store/requestStore'
 import { StateBadge } from './StateBadge'
 import { specimenLabelUrl } from './route'
 
-/** Fictional participating provider. Integration point: derive from provider login/location. */
-const DEMO_PROVIDER = 'Hillside Community Phlebotomy (fictional)'
+/** Integration point: derive from provider login/location. */
+const DEMO_PROVIDER = 'Hillside Community Phlebotomy'
 
 /**
  * What a local phlebotomy provider sees after scanning a QR. The token resolves to the request

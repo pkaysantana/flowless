@@ -9,7 +9,7 @@ function newId(prefix: string): string {
 
 export function NewRequestForm({ onCreated, onCancel }: { onCreated: (r: MonitoringRequest) => void; onCancel: () => void }) {
   const [odsOrgCode, setOdsOrgCode] = useState('RRK')
-  const [orgName, setOrgName] = useState('Demo Teaching Hospital NHS Trust (fictional)')
+  const [orgName, setOrgName] = useState('Demo Teaching Hospital NHS Trust')
   const [odsSiteCode, setOdsSiteCode] = useState('RRK01')
   const [siteName, setSiteName] = useState('Demo Teaching Hospital — Main Site')
   const [wardCode, setWardCode] = useState('')
@@ -161,7 +161,7 @@ export function NewRequestForm({ onCreated, onCancel }: { onCreated: (r: Monitor
         <input placeholder="inbox://…" value={routingAddress} onChange={(e) => setRoutingAddress(e.target.value)} />
       </label>
 
-      <h3>Patient (fictional)</h3>
+      <h3>Patient</h3>
       <div className="columns">
         <label>
           Full name

@@ -1,13 +1,13 @@
 [
   {
     "id": "PLAN-DEMO-001",
-    "patientRef": "PT-FICTIONAL-0001",
+    "patientRef": "PT-0001",
     "demographics": {
-      "fullName": "Jordan Sample",
+      "fullName": "Jordan Reeves",
       "dateOfBirth": "1968-04-12",
       "sex": "Male",
       "nhsNumber": "999 000 0001",
-      "email": "jordan.sample@fictional-demo.example",
+      "email": "jordan.reeves@example.com",
       "phone": "07700 900001"
     },
     "tests": [
@@ -18,8 +18,8 @@
         "instructions": "Citrate tube. Note current warfarin dose if patient knows it."
       }
     ],
-    "requestingClinician": { "id": "CLIN-DEMO-01", "name": "Dr Fictional Haematologist", "role": "Consultant Haematologist", "esrNumber": "ESR-1000234" },
-    "requestingOrganisation": { "id": "ORG-DEMO-01", "name": "Demo Teaching Hospital NHS Trust (fictional)", "odsOrgCode": "RRK" },
+    "requestingClinician": { "id": "CLIN-DEMO-01", "name": "Dr Sarah Whitfield", "role": "Consultant Haematologist", "esrNumber": "ESR-1000234" },
+    "requestingOrganisation": { "id": "ORG-DEMO-01", "name": "Demo Teaching Hospital NHS Trust", "odsOrgCode": "RRK" },
     "requestingSite": { "odsSiteCode": "RRK01", "siteName": "Demo Teaching Hospital — Main Site", "wardCode": "HAEM-OP-C", "wardName": "Haematology Outpatients" },
     "routing": { "kind": "TEAM_INBOX", "address": "inbox://demo-anticoag-team", "label": "Anticoagulation team inbox" },
     "reasonableAdjustments": ["Needs a seated blood draw (history of fainting)", "Prefers morning appointments"],
@@ -29,9 +29,9 @@
   },
   {
     "id": "PLAN-DEMO-002",
-    "patientRef": "PT-FICTIONAL-0002",
+    "patientRef": "PT-0002",
     "demographics": {
-      "fullName": "Priya Placeholder",
+      "fullName": "Priya Anand",
       "dateOfBirth": "1991-11-30",
       "sex": "Female",
       "nhsNumber": null,
@@ -42,10 +42,10 @@
       { "code": "TFT", "name": "Thyroid function tests", "snomedCode": "61167008" },
       { "code": "FBC", "name": "Full blood count", "snomedCode": "26604007" }
     ],
-    "requestingClinician": { "id": "CLIN-DEMO-02", "name": "Dr Fictional Endocrinologist", "role": "Consultant Endocrinologist", "esrNumber": "ESR-1000567" },
-    "requestingOrganisation": { "id": "ORG-DEMO-01", "name": "Demo Teaching Hospital NHS Trust (fictional)", "odsOrgCode": "RRK" },
+    "requestingClinician": { "id": "CLIN-DEMO-02", "name": "Dr Michael Osei", "role": "Consultant Endocrinologist", "esrNumber": "ESR-1000567" },
+    "requestingOrganisation": { "id": "ORG-DEMO-01", "name": "Demo Teaching Hospital NHS Trust", "odsOrgCode": "RRK" },
     "requestingSite": { "odsSiteCode": "RRK01", "siteName": "Demo Teaching Hospital — Main Site", "wardCode": "ENDO-OP-B", "wardName": "Endocrinology Outpatients" },
-    "routing": { "kind": "CLINICIAN_INBOX", "address": "inbox://demo-clin-02", "label": "Dr Fictional Endocrinologist" },
+    "routing": { "kind": "CLINICIAN_INBOX", "address": "inbox://demo-clin-02", "label": "Dr Michael Osei" },
     "reasonableAdjustments": ["Interpreter (Gujarati) may be required"],
     "validityDays": 14,
     "recurrence": null,

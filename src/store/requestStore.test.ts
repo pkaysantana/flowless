@@ -4,7 +4,7 @@ import type { MonitoringPlan } from '../domain'
 
 const NEW_PLAN: MonitoringPlan = {
   id: 'PLAN-TEST-999',
-  patientRef: 'PT-FICTIONAL-TEST',
+  patientRef: 'PT-TEST-999',
   demographics: { fullName: 'Test Patient', dateOfBirth: '1990-01-01', sex: 'Female', nhsNumber: null },
   tests: [{ code: 'FBC', name: 'Full blood count', snomedCode: '26604007' }],
   requestingClinician: { id: 'CLIN-TEST', name: 'Dr Test', role: 'Test Registrar', esrNumber: 'ESR-0001' },
