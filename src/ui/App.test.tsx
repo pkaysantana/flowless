@@ -72,6 +72,29 @@ describe('specimen label', () => {
   })
 })
 
+describe('new request intake', () => {
+  it('creates a plan and its first request, then shows it selected in the console', () => {
+    window.location.hash = ''
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /\+ new request/i }))
+
+    fireEvent.change(screen.getByLabelText(/ward\/department code/i), { target: { value: 'HAEM-OP-C' } })
+    fireEvent.change(screen.getByLabelText(/ward\/department name/i), { target: { value: 'Haematology Outpatients' } })
+    fireEvent.change(screen.getByLabelText(/^name$/i), { target: { value: 'Dr New Clinician' } })
+    fireEvent.change(screen.getByLabelText(/^role$/i), { target: { value: 'Registrar' } })
+    fireEvent.change(screen.getByLabelText(/esr number/i), { target: { value: 'ESR-1234' } })
+    fireEvent.change(screen.getByLabelText(/destination label/i), { target: { value: 'Test inbox' } })
+    fireEvent.change(screen.getByLabelText(/^full name$/i), { target: { value: 'New Fictional Patient' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: /fbc/i }))
+
+    fireEvent.click(screen.getByRole('button', { name: /^create request$/i }))
+
+    const nav = screen.getByRole('navigation', { name: /monitoring requests/i })
+    expect(within(nav).getByText('New Fictional Patient')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'New Fictional Patient' })).toBeInTheDocument()
+  })
+})
+
 describe('patient delivery', () => {
   it('prints a patient letter that does show the patient name', () => {
     window.location.hash = `#/letter/${recurring.token}`

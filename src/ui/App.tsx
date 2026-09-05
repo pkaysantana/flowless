@@ -7,6 +7,7 @@ import { LabView } from './LabView'
 import { SpecimenLabel } from './SpecimenLabel'
 import { PatientLetter } from './PatientLetter'
 import { NhsAppMock } from './NhsAppMock'
+import { NewRequestForm } from './NewRequestForm'
 import { useRoute } from './route'
 
 const TITLE = import.meta.env.VITE_APP_TITLE || 'Care Relay — Demo'
@@ -16,6 +17,7 @@ export default function App() {
   const route = useRoute()
   const { requests } = useRequestStore()
   const [selectedId, setSelectedId] = useState<string | null>(requests[0]?.id ?? null)
+  const [showNewRequestForm, setShowNewRequestForm] = useState(false)
   const selected = requests.find((r) => r.id === selectedId) ?? requests[0]
 
   return (
@@ -47,12 +49,18 @@ export default function App() {
       ) : (
         <div className="app__body">
           <nav className="list" aria-label="Monitoring requests">
+            <button type="button" className="btn--human" style={{ margin: '0.75rem' }} onClick={() => setShowNewRequestForm(true)}>
+              + New request
+            </button>
             {requests.map((r) => (
               <button
                 key={r.id}
                 type="button"
-                className={`list__item ${r.id === selected?.id ? 'list__item--active' : ''}`}
-                onClick={() => setSelectedId(r.id)}
+                className={`list__item ${!showNewRequestForm && r.id === selected?.id ? 'list__item--active' : ''}`}
+                onClick={() => {
+                  setSelectedId(r.id)
+                  setShowNewRequestForm(false)
+                }}
               >
                 <span className="list__item-title">{r.demographics.fullName}</span>
                 <span className="list__item-meta">
@@ -62,9 +70,17 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <main className="detail">
-            {selected ? <RequestDetail request={selected} /> : <p>No requests loaded.</p>}
-          </main>
+          {showNewRequestForm ? (
+            <NewRequestForm
+              onCreated={(r) => {
+                setSelectedId(r.id)
+                setShowNewRequestForm(false)
+              }}
+              onCancel={() => setShowNewRequestForm(false)}
+            />
+          ) : (
+            <main className="detail">{selected ? <RequestDetail request={selected} /> : <p>No requests loaded.</p>}</main>
+          )}
         </div>
       )}
     </div>
