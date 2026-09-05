@@ -73,6 +73,20 @@ export function pathwayBranch(referral: Referral): 'ACTION_READY' | 'REFERRAL_DR
   return referral.pathway.kind === 'SECONDARY_CARE_REFERRAL' ? 'REFERRAL_DRAFTED' : 'ACTION_READY'
 }
 
+/**
+ * Transitions that make sense to offer for this referral: filters out the branch not implied by the
+ * recorded pathway decision and the pre-flight outcome that does not match the current issues.
+ */
+export function nextSteps(referral: Referral): TransitionRule[] {
+  const branch = pathwayBranch(referral)
+  const outcome = requirementsOutcome(referral)
+  return availableTransitions(referral.state).filter((t) => {
+    if (t.from === 'PATHWAY_SELECTED') return t.to === branch
+    if (t.from === 'REFERRAL_REQUIREMENTS_CHECKED') return t.to === outcome
+    return true
+  })
+}
+
 /** The single valid outcome of a pre-flight check for this referral. */
 export function requirementsOutcome(referral: Referral): 'NEEDS_REVIEW' | 'READY_FOR_CLINICIAN_APPROVAL' {
   return referral.issues.length > 0 ? 'NEEDS_REVIEW' : 'READY_FOR_CLINICIAN_APPROVAL'

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DEMO_GUIDANCE, loadDemoReferrals, requirementsFor } from '../data/demo'
 import { generatePathwayOptions, selectPathway } from './pathways'
 import { checkRequirements, resolveIssue } from './requirements'
-import { pathwayBranch, requirementsOutcome, transition, TransitionError } from './workflow'
+import { nextSteps, pathwayBranch, requirementsOutcome, transition, TransitionError } from './workflow'
 import type { Referral } from './types'
 
 const now = () => '2026-01-01T00:00:00.000Z'
@@ -46,6 +46,7 @@ describe('pathway support', () => {
     expect(r.pathway?.override).toBe(true)
     r = transition(r, { to: 'PATHWAY_SELECTED', actor: DR, now })
     expect(pathwayBranch(r)).toBe('ACTION_READY')
+    expect(nextSteps(r).map((t) => t.to)).toEqual(['ACTION_READY'])
     expect(() => transition(r, { to: 'REFERRAL_DRAFTED', actor: 'system', now })).toThrowError(
       expect.objectContaining({ code: 'WRONG_BRANCH' }),
     )

@@ -53,8 +53,8 @@ describe('App smoke test', () => {
     expect(within(detail).getAllByTestId('issue').length).toBeGreaterThanOrEqual(5)
     expect(within(detail).getAllByText('Not recorded').length).toBeGreaterThan(0)
 
-    click(/Ready for clinician approval/)
-    expect(within(detail).getByRole('alert')).toHaveTextContent(/unresolved issue/)
+    // Only the computed pre-flight outcome is offered; approval is not even presented while issues remain.
+    expect(within(detail).queryByRole('button', { name: /Ready for clinician approval/ })).toBeNull()
 
     click(/Flag for review/)
     expect(within(detail).getByTestId('state-badge')).toHaveTextContent('NEEDS REVIEW')

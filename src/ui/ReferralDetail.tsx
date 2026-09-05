@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  availableTransitions,
+  nextSteps,
   TransitionError,
   type FieldValue,
   type Issue,
@@ -76,16 +76,20 @@ function IssueCard({ referral, issue }: { referral: Referral; issue: Issue }) {
 }
 
 export function ReferralDetail({ referral }: { referral: Referral }) {
-  const [error, setError] = useState<string | null>(null)
+  // An error is tied to the case revision it occurred on, so it disappears once the case changes.
+  const [errorAt, setErrorAt] = useState<{ id: string; rev: number; message: string } | null>(null)
+  const rev = referral.history.length
+  const error = errorAt && errorAt.id === referral.id && errorAt.rev === rev ? errorAt.message : null
   // 'Select pathway' is performed via the PathwayPanel, not a plain button.
-  const transitions = availableTransitions(referral.state).filter((t) => t.to !== 'PATHWAY_SELECTED')
+  const transitions = nextSteps(referral).filter((t) => t.to !== 'PATHWAY_SELECTED')
 
   function go(to: Referral['state'], requiresHuman: boolean) {
-    setError(null)
+    setErrorAt(null)
     try {
       referralStore.transition(referral.id, to, requiresHuman ? DEMO_ACTOR : 'system')
     } catch (e) {
-      setError(e instanceof TransitionError ? e.message : 'Unexpected error — see console')
+      const message = e instanceof TransitionError ? e.message : 'Unexpected error — see console'
+      setErrorAt({ id: referral.id, rev, message })
       if (!(e instanceof TransitionError)) console.error(e)
     }
   }
@@ -131,7 +135,7 @@ export function ReferralDetail({ referral }: { referral: Referral }) {
         )}
       </section>
 
-      <PathwayPanel referral={referral} actor={DEMO_ACTOR} onError={setError} />
+      <PathwayPanel referral={referral} actor={DEMO_ACTOR} onError={(message) => setErrorAt(message ? { id: referral.id, rev, message } : null)} />
 
       <section>
         <h3>
