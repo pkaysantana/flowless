@@ -110,9 +110,18 @@ describe('patient delivery', () => {
     expect(screen.getByText(/reminder: repeats every 28 days/i)).toBeInTheDocument()
   })
 
-  it('records a simulated notification in the request history when no contact details are on file', () => {
+  it('records simulated email/SMS delivery in the request history when contact details are on file', () => {
     window.location.hash = ''
     render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /notify patient/i }))
+    expect(screen.getByText(new RegExp(`Simulated email sent to ${recurring.demographics.email}`))).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`Simulated SMS sent to ${recurring.demographics.phone}`))).toBeInTheDocument()
+  })
+
+  it('falls back to a no-contact-on-file note when the patient has no email or phone', () => {
+    window.location.hash = ''
+    render(<App />)
+    fireEvent.click(screen.getByText('Priya Placeholder'))
     fireEvent.click(screen.getByRole('button', { name: /notify patient/i }))
     expect(screen.getByText(/no email\/phone on file/i)).toBeInTheDocument()
   })

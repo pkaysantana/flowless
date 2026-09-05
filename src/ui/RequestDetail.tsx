@@ -169,7 +169,7 @@ export function RequestDetail({ request: r }: { request: MonitoringRequest }) {
           <ul className="plain">
             {r.tests.map((t) => (
               <li key={t.code}>
-                <strong>{t.code}</strong> — {t.name}
+                <strong>{t.code}</strong> — {t.name} <span className="muted">(SNOMED {t.snomedCode})</span>
                 {t.instructions && <div className="muted">{t.instructions}</div>}
               </li>
             ))}
@@ -177,7 +177,10 @@ export function RequestDetail({ request: r }: { request: MonitoringRequest }) {
           <h3>Requested by</h3>
           <dl>
             <Field label="Clinician" value={`${r.requestingClinician.name} · ${r.requestingClinician.role}`} />
-            <Field label="Organisation" value={r.requestingOrganisation.name} />
+            <Field label="ESR number" value={r.requestingClinician.esrNumber} />
+            <Field label="Organisation" value={`${r.requestingOrganisation.name} (ODS ${r.requestingOrganisation.odsOrgCode})`} />
+            <Field label="Site" value={`${r.requestingSite.siteName} (ODS ${r.requestingSite.odsSiteCode})`} />
+            <Field label="Ward/department" value={`${r.requestingSite.wardName} (${r.requestingSite.wardCode})`} />
           </dl>
         </section>
       </div>
