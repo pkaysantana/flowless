@@ -1,0 +1,43 @@
+[
+  {
+    "id": "PLAN-DEMO-001",
+    "patientRef": "PT-FICTIONAL-0001",
+    "demographics": {
+      "fullName": "Jordan Sample",
+      "dateOfBirth": "1968-04-12",
+      "sex": "Male",
+      "nhsNumber": "999 000 0001"
+    },
+    "tests": [
+      { "code": "INR", "name": "International Normalised Ratio", "instructions": "Citrate tube. Note current warfarin dose if patient knows it." }
+    ],
+    "requestingClinician": { "id": "CLIN-DEMO-01", "name": "Dr Fictional Haematologist", "role": "Consultant Haematologist" },
+    "requestingOrganisation": { "id": "ORG-DEMO-01", "name": "Demo Teaching Hospital NHS Trust (fictional)" },
+    "routing": { "kind": "TEAM_INBOX", "address": "inbox://demo-anticoag-team", "label": "Anticoagulation team inbox" },
+    "reasonableAdjustments": ["Needs a seated blood draw (history of fainting)", "Prefers morning appointments"],
+    "validityDays": 14,
+    "recurrence": { "intervalDays": 28, "endsAt": "2026-12-31T00:00:00.000Z" },
+    "startsAt": "2026-09-01T00:00:00.000Z"
+  },
+  {
+    "id": "PLAN-DEMO-002",
+    "patientRef": "PT-FICTIONAL-0002",
+    "demographics": {
+      "fullName": "Priya Placeholder",
+      "dateOfBirth": "1991-11-30",
+      "sex": "Female",
+      "nhsNumber": null
+    },
+    "tests": [
+      { "code": "TFT", "name": "Thyroid function tests" },
+      { "code": "FBC", "name": "Full blood count" }
+    ],
+    "requestingClinician": { "id": "CLIN-DEMO-02", "name": "Dr Fictional Endocrinologist", "role": "Consultant Endocrinologist" },
+    "requestingOrganisation": { "id": "ORG-DEMO-01", "name": "Demo Teaching Hospital NHS Trust (fictional)" },
+    "routing": { "kind": "CLINICIAN_INBOX", "address": "inbox://demo-clin-02", "label": "Dr Fictional Endocrinologist" },
+    "reasonableAdjustments": ["Interpreter (Gujarati) may be required"],
+    "validityDays": 14,
+    "recurrence": null,
+    "startsAt": "2026-07-01T00:00:00.000Z"
+  }
+]
