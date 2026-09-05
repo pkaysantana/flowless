@@ -28,7 +28,7 @@ describe('specialist console', () => {
     // Provider side
     act(() => {
       requestStore.present(recurring.token, 'Provider')
-      requestStore.transition(recurring.id, 'SAMPLE_COLLECTED', 'Provider')
+      requestStore.collectSample(recurring.id, 'Provider')
     })
     const nav = screen.getByRole('navigation', { name: /monitoring requests/i })
     expect(within(nav).getByText(/PLAN-DEMO-001-R02/)).toBeInTheDocument()

@@ -85,7 +85,7 @@ export function ProviderView({ initialToken }: { initialToken: string }) {
               </button>
             )}
             {request.status === 'PRESENTED' && (
-              <button type="button" className="btn--human" onClick={() => act(() => requestStore.transition(request.id, 'SAMPLE_COLLECTED', DEMO_PROVIDER))}>
+              <button type="button" className="btn--human" onClick={() => act(() => requestStore.collectSample(request.id, DEMO_PROVIDER))}>
                 Confirm sample collected
               </button>
             )}
